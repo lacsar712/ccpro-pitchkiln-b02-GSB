@@ -31,6 +31,34 @@ class ResinLotForm(forms.ModelForm):
             self.initial["receivedAt"] = local.strftime("%Y-%m-%dT%H:%M")
 
 
+class ResinLotMergeForm(forms.Form):
+    source = forms.ModelChoiceField(
+        label="源批（并入后删除）",
+        queryset=ResinLot.objects.none(),
+        empty_label=None,
+        widget=forms.Select(attrs={"class": "field"}),
+    )
+    target = forms.ModelChoiceField(
+        label="目标批（保留并累加到货量）",
+        queryset=ResinLot.objects.none(),
+        empty_label=None,
+        widget=forms.Select(attrs={"class": "field"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lots = ResinLot.objects.all()
+        self.fields["source"].queryset = lots
+        self.fields["target"].queryset = lots
+
+    def clean(self):
+        cleaned = super().clean()
+        source, target = cleaned.get("source"), cleaned.get("target")
+        if source and target and source.pk == target.pk:
+            raise forms.ValidationError("源批与目标批不能是同一批。")
+        return cleaned
+
+
 class PhaseChangeForm(forms.Form):
     phase = forms.ChoiceField(
         label="相位",

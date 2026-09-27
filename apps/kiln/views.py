@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -8,9 +8,16 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
-from .forms import OpenCookRunForm, PhaseChangeForm, ResinLotForm, SoftPointProbeForm
+from .forms import (
+    OpenCookRunForm,
+    PhaseChangeForm,
+    ResinLotForm,
+    ResinLotMergeForm,
+    SoftPointProbeForm,
+)
 from .models import CookRun, FireHearth, ResinLot
 from .services.floor_rules import change_hearth_phase
+from .services.lot_merge import merge_resin_lots
 
 
 def _wants_htmx(request):
@@ -208,4 +215,48 @@ def resin_lot_feed(request):
         )
 
     lots = ResinLot.objects.all()[:40]
-    return render(request, "resin/feed.html", {"lots": lots, "form": form})
+    merge_form = ResinLotMergeForm() if request.user.is_staff else None
+    return render(
+        request,
+        "resin/feed.html",
+        {"lots": lots, "form": form, "merge_form": merge_form},
+    )
+
+
+@login_required
+def resin_lot_detail(request, pk):
+    lot = get_object_or_404(ResinLot, pk=pk)
+    runs = lot.runs.select_related("hearth").order_by("-openedAt", "-id")
+    return render(
+        request,
+        "resin/detail.html",
+        {"lot": lot, "runs": runs},
+    )
+
+
+@login_required
+@require_POST
+def resin_lot_merge(request):
+    if not request.user.is_staff:
+        raise PermissionDenied("仅主管可发起来脂批合并，值守工一律拒绝。")
+
+    form = ResinLotMergeForm(request.POST)
+    if form.is_valid():
+        source = form.cleaned_data["source"]
+        target = form.cleaned_data["target"]
+        try:
+            merged = merge_resin_lots(source, target)
+            messages.success(
+                request,
+                f"已将 {source.lotCode} 并入 {merged.lotCode}："
+                f"{merged.merged_run_count} 条值守改挂目标批，"
+                f"到货量累加为 {merged.arrivalKg} kg。",
+            )
+        except ValidationError as exc:
+            messages.error(request, exc.messages[0])
+    else:
+        for errs in form.errors.values():
+            for e in errs:
+                messages.error(request, e)
+            break
+    return redirect("resin_lot_feed")

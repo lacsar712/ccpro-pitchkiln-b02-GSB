@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ lot.lotCode }}{% endblock %}
+{% block content %}
+<section class="feed-head">
+  <div>
+    <h1>{{ lot.lotCode }}</h1>
+    <p class="board-sub">来脂批详情 · 按批筛值守</p>
+  </div>
+  <a class="back-link" href="{% url 'resin_lot_feed' %}">← 回来脂批</a>
+</section>
+
+<section class="lot-detail-panel">
+  <dl class="kv">
+    <dt>来源地</dt><dd>{{ lot.originPlace }}</dd>
+    <dt>到货量</dt><dd class="mono">{{ lot.arrivalKg }} kg</dd>
+    <dt>到货时间</dt><dd class="mono">{{ lot.receivedAt|date:"Y-m-d H:i" }}</dd>
+  </dl>
+</section>
+
+<section class="lot-detail-panel">
+  <h2 class="lot-runs-head">值守记录（{{ runs|length }}）</h2>
+  <ol class="probe-timeline">
+    {% for run in runs %}
+    <li class="{% if run.is_open %}hot{% else %}ok{% endif %}">
+      <span class="mono temp">{{ run.hearth.tag }}</span>
+      <span class="when">
+        {{ run.openedAt|date:"m-d H:i" }} →
+        {% if run.closedAt %}{{ run.closedAt|date:"m-d H:i" }}{% else %}未收灶{% endif %}
+        · {{ run.hearth.get_phase_display }}
+      </span>
+      <span class="who">目标 {{ run.targetSoftPointC }}℃</span>
+    </li>
+    {% empty %}
+    <li class="empty">该批暂无值守记录</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}

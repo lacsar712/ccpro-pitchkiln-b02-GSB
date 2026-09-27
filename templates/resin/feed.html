@@ -10,22 +10,42 @@
 </section>
 
 <div class="feed-layout">
-  <form method="post" class="lot-intake stack-form">
-    {% csrf_token %}
-    <h2>登记到货</h2>
-    {{ form.as_p }}
-    <button type="submit" class="btn-ember">写入来脂批</button>
-  </form>
+  <div class="feed-side">
+    <form method="post" class="lot-intake stack-form">
+      {% csrf_token %}
+      <h2>登记到货</h2>
+      {{ form.as_p }}
+      <button type="submit" class="btn-ember">写入来脂批</button>
+    </form>
+
+    {% if merge_form %}
+    <form method="post" action="{% url 'resin_lot_merge' %}" class="lot-merge stack-form">
+      {% csrf_token %}
+      <h2>合并来脂批</h2>
+      <p class="hint">
+        源批并入目标批后删除：全部值守改挂目标批，到货量(kg)累加进目标批。
+        两批到货地不同时，以目标批来源地为准。
+        任一侧有出胶相位灶上的未收灶值守，整次拒绝。
+      </p>
+      {{ merge_form.as_p }}
+      <button type="submit" class="btn-ember">并入目标批</button>
+    </form>
+    {% else %}
+    <p class="lot-merge-note">合并来脂批仅主管可操作。</p>
+    {% endif %}
+  </div>
 
   <ol class="lot-feed">
     {% for lot in lots %}
     <li class="lot-card">
-      <div class="lot-code mono">{{ lot.lotCode }}</div>
-      <div class="lot-place">{{ lot.originPlace }}</div>
-      <div class="lot-meta">
-        <span class="mono">{{ lot.arrivalKg }} kg</span>
-        <span>{{ lot.receivedAt|date:"Y-m-d H:i" }}</span>
-      </div>
+      <a class="lot-link" href="{% url 'resin_lot_detail' lot.pk %}">
+        <div class="lot-code mono">{{ lot.lotCode }}</div>
+        <div class="lot-place">{{ lot.originPlace }}</div>
+        <div class="lot-meta">
+          <span class="mono">{{ lot.arrivalKg }} kg</span>
+          <span>{{ lot.receivedAt|date:"Y-m-d H:i" }}</span>
+        </div>
+      </a>
     </li>
     {% empty %}
     <li class="lot-card empty">暂无来脂批</li>
