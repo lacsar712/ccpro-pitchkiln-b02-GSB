@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}合并来脂批{% endblock %}
+{% block content %}
+<section class="feed-head">
+  <div>
+    <h1>合并来脂批</h1>
+    <p class="board-sub">主管专用 · 源批并入目标批后删除</p>
+  </div>
+  <a class="back-link" href="{% url 'resin_lot_feed' %}">← 回来脂批</a>
+</section>
+
+<form method="post" class="lot-intake stack-form merge-form">
+  {% csrf_token %}
+  <h2>选择源批与目标批</h2>
+  <p class="hint">先把源批的未收灶值守改挂到目标批，目标批千克累加源批到货量，再删除源批。两批到货地不同时，以目标批（保留批）的到货地为准，源批到货地不再保留。任一批在「出胶」相位灶上挂着未收灶值守时，整次合并拒绝。</p>
+  {{ form.as_p }}
+  <button type="submit" class="btn-ember">合并并入目标批</button>
+</form>
+{% endblock %}

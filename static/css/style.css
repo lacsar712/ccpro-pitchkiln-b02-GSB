@@ -608,6 +608,44 @@ body {
 
 .back-link:hover { text-decoration: underline; }
 
+/* —— resin lot merge + detail —— */
+.feed-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.lot-merge { border-top: 3px solid var(--ember-dim); }
+
+.merge-form {
+  max-width: 420px;
+}
+
+.merge-form h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+}
+
+a.lot-code {
+  color: var(--ink);
+  text-decoration: none;
+  display: inline-block;
+}
+
+a.lot-code:hover { color: var(--ember); }
+
+.run-list-head {
+  margin: 0 0 0.6rem;
+  font-size: 0.95rem;
+  color: var(--cinder);
+}
+
+.run-open {
+  color: var(--ember);
+  font-size: 0.75rem;
+  margin-left: 0.4rem;
+}
+
 @media (max-width: 900px) {
   .ember-gate { grid-template-columns: 1fr; }
   .floor-grid { margin-right: 0; }

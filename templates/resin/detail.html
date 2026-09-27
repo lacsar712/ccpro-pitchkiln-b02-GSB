@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ lot.lotCode }}{% endblock %}
+{% block content %}
+<section class="feed-head">
+  <div>
+    <h1>{{ lot.lotCode }}</h1>
+    <p class="board-sub">来脂批详情 · 按批筛值守</p>
+  </div>
+  <a class="back-link" href="{% url 'resin_lot_feed' %}">← 回来脂批</a>
+</section>
+
+<div class="feed-layout">
+  <section class="lot-intake">
+    <h2>批次信息</h2>
+    <dl class="kv">
+      <dt>批号</dt><dd class="mono">{{ lot.lotCode }}</dd>
+      <dt>到货地</dt><dd>{{ lot.originPlace }}</dd>
+      <dt>到货量</dt><dd class="mono">{{ lot.arrivalKg }} kg</dd>
+      <dt>到货时间</dt><dd class="mono">{{ lot.receivedAt|date:"Y-m-d H:i" }}</dd>
+    </dl>
+  </section>
+
+  <section>
+    <h2 class="run-list-head">本批值守（{{ runs|length }}）</h2>
+    <ol class="lot-feed">
+      {% for run in runs %}
+      <li class="lot-card">
+        <div class="lot-code mono">{{ run.hearth.tag }} <span class="muted">· 过道 {{ run.hearth.lane }}</span></div>
+        <div class="lot-place">
+          <span class="badge phase-{{ run.hearth.phase }}">{{ run.hearth.get_phase_display }}</span>
+          {% if run.is_open %}<span class="run-open">未收灶</span>{% else %}<span class="muted">已收灶</span>{% endif %}
+        </div>
+        <div class="lot-meta">
+          <span class="mono">目标 {{ run.targetSoftPointC }}℃</span>
+          <span>{{ run.resinLot.lotCode }}</span>
+        </div>
+        <div class="lot-meta">
+          <span>开 {{ run.openedAt|date:"Y-m-d H:i" }}</span>
+          <span>{% if run.closedAt %}收 {{ run.closedAt|date:"Y-m-d H:i" }}{% else %}—{% endif %}</span>
+        </div>
+      </li>
+      {% empty %}
+      <li class="lot-card empty">本批暂无值守</li>
+      {% endfor %}
+    </ol>
+  </section>
+</div>
+{% endblock %}

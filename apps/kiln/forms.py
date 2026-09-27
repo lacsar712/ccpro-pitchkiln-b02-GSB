@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from .models import CookRun, FireHearth, ResinLot, SoftPointProbe
 from .services.floor_rules import assert_can_enter_drawing
+from .services.lot_merge import assert_lots_mergeable
 
 
 class ResinLotForm(forms.ModelForm):
@@ -29,6 +30,35 @@ class ResinLotForm(forms.ModelForm):
         if self.instance and self.instance.pk and self.instance.receivedAt:
             local = timezone.localtime(self.instance.receivedAt)
             self.initial["receivedAt"] = local.strftime("%Y-%m-%dT%H:%M")
+
+
+class ResinLotMergeForm(forms.Form):
+    """主管合并来脂批：源批并入目标批后删除。"""
+
+    source = forms.ModelChoiceField(
+        label="源来脂批（并入后删除）",
+        queryset=ResinLot.objects.all(),
+        widget=forms.Select(attrs={"class": "field"}),
+    )
+    target = forms.ModelChoiceField(
+        label="目标来脂批（保留并累加千克）",
+        queryset=ResinLot.objects.all(),
+        widget=forms.Select(attrs={"class": "field"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        lots = ResinLot.objects.all()
+        self.fields["source"].queryset = lots
+        self.fields["target"].queryset = lots
+
+    def clean(self):
+        cleaned = super().clean()
+        source = cleaned.get("source")
+        target = cleaned.get("target")
+        if source is not None and target is not None:
+            assert_lots_mergeable(source, target)
+        return cleaned
 
 
 class PhaseChangeForm(forms.Form):
